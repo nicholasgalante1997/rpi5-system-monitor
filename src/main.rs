@@ -1,18 +1,15 @@
-use actix_web::{dev::Service, web, App, HttpServer};
+use actix_web::{dev::Service, web, App, HttpServer, middleware};
 use debugrs::debug;
 use sysinfo::System;
 
 use std::sync::{Arc, Mutex};
 
+mod app;
 mod env;
 mod log;
 mod models;
 mod services;
-
-#[derive(Clone)]
-struct AppState {
-    system: Arc<Mutex<System>>,
-}
+mod ui;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -22,7 +19,7 @@ async fn main() -> std::io::Result<()> {
 
     system.refresh_all();
 
-    let app_state = AppState {
+    let app_state = app::AppState {
         system: Arc::new(Mutex::new(system))
     };
 
@@ -39,6 +36,20 @@ async fn main() -> std::io::Result<()> {
                     Ok(res)
                 }
             })
+            .service(
+                web::scope("")
+                .wrap(middleware::Compress::default())
+                .configure(|config| {
+                    services::health::configure_health_check_service(config);
+                })
+            )
+            .service(
+                web::scope("")
+                    .wrap(middleware::Compress::default())
+                    .configure(|config| {
+                        services::health::configure_health_check_service(config);
+                    }),
+            )
     })
     .bind(("127.0.0.1", 8080))?
     .run()
