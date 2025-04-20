@@ -20,12 +20,19 @@ impl Html {
                     {}
                 </head>
                 <body>
-                    <section>
+                    <div class="container">
+                        <div class="hero">
+                            <img src="https://cdn.iconscout.com/icon/free/png-256/free-raspberry-pi-3-569254.png" alt="Raspberry Pi Logo">
+                            <h1>System Monitor</h1>
+                            <p class="subtitle">Real-time hardware information dashboard</p>
+                        </div>
                         {}
-                    <section>
+                    </div>
                 </body>
                 <script async="async" type="module">
+                    setTimeout(() => window.reload(), 1000 * 60 * 60);
                 </script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
             </html>
             "#,
             Html::get_page_styles(),

@@ -1,20 +1,26 @@
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{web, Error, HttpResponse, Responder};
 use futures::{future::ok, stream::once};
+use std::sync::Arc;
+
 use crate::{app::AppState, models::system_report::SystemReporter, ui::Html};
 
 pub async fn handler(app_state: web::Data<AppState>) -> impl Responder {
-    let components_guard = app_state.components.lock().unwrap();
-    let components = components_guard.as_ref();
-
-    let disks_guard = app_state.disks.lock().unwrap();
-    let disks = disks_guard.as_ref();
+    let components = app_state.components.lock().unwrap();
+    let disks = app_state.disks.lock().unwrap();
+    let networks = app_state.networks.lock().unwrap();
+    let mut system = app_state.system.lock().unwrap();
     
-    let networks = app_state.networks.get_mut().unwrap();
-    let system = app_state.system.get_mut().unwrap();
-    let mut system_reporter = SystemReporter::new(components, disks, networks, system);
+    let mut system_reporter = SystemReporter::new(&components, &disks, &networks, &mut system);
     let system_report = system_reporter.build_report();
     let html = Html::new(system_report.into_html());
-    HttpResponse::Ok().body(html.into_page())
+    let page = html.into_page();
+
+    let bytes = web::Bytes::from(page);
+    let body = once(ok::<_, Error>(bytes));
+     
+    HttpResponse::Ok()
+        .content_type("text/html")
+        .streaming(body)
 }
 
 

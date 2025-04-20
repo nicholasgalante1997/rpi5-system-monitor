@@ -1,4 +1,4 @@
-use actix_web::{dev::Service, web, App, HttpServer, middleware};
+use actix_web::{App, HttpServer, dev::Service, middleware, web};
 use debugrs::debug;
 use sysinfo::{Components, Disks, Networks, System};
 
@@ -26,7 +26,7 @@ async fn main() -> std::io::Result<()> {
         components: Arc::new(Mutex::new(components)),
         disks: Arc::new(Mutex::new(disks)),
         networks: Arc::new(Mutex::new(networks)),
-        system: Arc::new(Mutex::new(system))
+        system: Arc::new(Mutex::new(system)),
     };
 
     HttpServer::new(move || {
@@ -35,7 +35,7 @@ async fn main() -> std::io::Result<()> {
             .wrap_fn(|req, srv| {
                 let logline = format!("{} {}", req.method(), req.path());
                 debug!(log::logger(), logline);
-                
+
                 let fut = srv.call(req);
                 async {
                     let res = fut.await?;
@@ -43,17 +43,17 @@ async fn main() -> std::io::Result<()> {
                 }
             })
             .service(
-                web::scope("")
-                .wrap(middleware::Compress::default())
-                .configure(|config| {
-                    services::system::configure_system_monitor_service(config);
-                })
-            )
-            .service(
                 web::scope("/health")
                     .wrap(middleware::Compress::default())
                     .configure(|config| {
                         services::health::configure_health_check_service(config);
+                    }),
+            )
+            .service(
+                web::scope("")
+                    .wrap(middleware::Compress::default())
+                    .configure(|config| {
+                        services::system::configure_system_monitor_service(config);
                     }),
             )
     })

@@ -1,4 +1,4 @@
-use sysinfo::{Component, Disk, Networks, System};
+use sysinfo::{Components, Disks, Networks, System};
 
 pub struct SystemReport {
     pub total_memory: u64,
@@ -24,17 +24,17 @@ impl SystemReport {
 }
 
 pub struct SystemReporter<'a> {
-    components: &'a [Component],
-    disks: &'a [Disk],
-    networks: &'a mut Networks,
+    components: &'a Components,
+    disks: &'a Disks,
+    networks: &'a Networks,
     system: &'a mut System,
 }
 
 impl<'a> SystemReporter<'a> {
     pub fn new(
-        components: &'a [Component],
-        disks: &'a mut [Disk],
-        networks: &'a mut Networks,
+        components: &'a Components,
+        disks: &'a Disks,
+        networks: &'a Networks,
         system: &'a mut System,
     ) -> Self {
         SystemReporter {
