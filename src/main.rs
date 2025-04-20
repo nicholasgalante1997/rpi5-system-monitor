@@ -10,6 +10,7 @@ mod log;
 mod models;
 mod services;
 mod ui;
+mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -50,7 +51,7 @@ async fn main() -> std::io::Result<()> {
                     }),
             )
             .service(
-                web::scope("")
+                web::scope("/")
                     .wrap(middleware::Compress::default())
                     .configure(|config| {
                         services::system::configure_system_monitor_service(config);

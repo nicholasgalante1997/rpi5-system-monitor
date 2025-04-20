@@ -1,4 +1,4 @@
-use actix_web::{web, Error, HttpResponse, Responder};
+use actix_web::{Error, HttpResponse, Responder, web};
 use futures::{future::ok, stream::once};
 use std::sync::Arc;
 
@@ -9,7 +9,7 @@ pub async fn handler(app_state: web::Data<AppState>) -> impl Responder {
     let disks = app_state.disks.lock().unwrap();
     let networks = app_state.networks.lock().unwrap();
     let mut system = app_state.system.lock().unwrap();
-    
+
     let mut system_reporter = SystemReporter::new(&components, &disks, &networks, &mut system);
     let system_report = system_reporter.build_report();
     let html = Html::new(system_report.into_html());
@@ -17,12 +17,9 @@ pub async fn handler(app_state: web::Data<AppState>) -> impl Responder {
 
     let bytes = web::Bytes::from(page);
     let body = once(ok::<_, Error>(bytes));
-     
-    HttpResponse::Ok()
-        .content_type("text/html")
-        .streaming(body)
-}
 
+    HttpResponse::Ok().content_type("text/html").streaming(body)
+}
 
 pub fn configure_system_monitor_service(cfg: &mut web::ServiceConfig) {
     cfg.service(

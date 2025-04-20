@@ -1,11 +1,10 @@
-use actix_web::{HttpResponse, web};
 use crate::ui::Html;
+use actix_web::{HttpResponse, web};
 
 pub async fn handler() -> HttpResponse {
     let html = Html::new("<p>OK</p>".to_string());
     HttpResponse::Ok().body(html.into_page())
 }
-
 
 pub fn configure_health_check_service(cfg: &mut web::ServiceConfig) {
     cfg.service(

@@ -7,7 +7,6 @@ impl Html {
         Self { content }
     }
 
-
     pub fn into_page(&self) -> String {
         let page = format!(
             r#"
