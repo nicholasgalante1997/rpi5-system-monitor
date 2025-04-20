@@ -1,33 +1,39 @@
-use sysinfo::{Components, Disks, Networks, System};
+use sysinfo::{Component, Disk, Networks, System};
 
 pub struct SystemReport {
-    total_memory: u64,
-    used_memory: u64,
-    available_memory: u64,
+    pub total_memory: u64,
+    pub used_memory: u64,
+    pub available_memory: u64,
 
-    total_swap: u64,
-    used_swap: u64,
-    available_swap: u64,
+    pub total_swap: u64,
+    pub used_swap: u64,
+    pub available_swap: u64,
 
-    system_name: String,
-    system_kernal_version: String,
-    system_os_version: String,
-    system_host_name: String,
+    pub system_name: String,
+    pub system_kernal_version: String,
+    pub system_os_version: String,
+    pub system_host_name: String,
 
-    num_cpus: u8,
+    pub num_cpus: u8,
+}
+
+impl SystemReport {
+    pub fn into_html(&self) -> String {
+        r#""#.to_string()
+    }
 }
 
 pub struct SystemReporter<'a> {
-    components: &'a mut Components,
-    disks: &'a mut Disks,
+    components: &'a [Component],
+    disks: &'a [Disk],
     networks: &'a mut Networks,
     system: &'a mut System,
 }
 
 impl<'a> SystemReporter<'a> {
     pub fn new(
-        components: &'a mut Components,
-        disks: &'a mut Disks,
+        components: &'a [Component],
+        disks: &'a mut [Disk],
         networks: &'a mut Networks,
         system: &'a mut System,
     ) -> Self {

@@ -1,6 +1,6 @@
 use actix_web::{dev::Service, web, App, HttpServer, middleware};
 use debugrs::debug;
-use sysinfo::System;
+use sysinfo::{Components, Disks, Networks, System};
 
 use std::sync::{Arc, Mutex};
 
@@ -15,11 +15,17 @@ mod ui;
 async fn main() -> std::io::Result<()> {
     env::setup_env();
 
+    let components = Components::new_with_refreshed_list();
+    let disks = Disks::new_with_refreshed_list();
+    let networks = Networks::new();
     let mut system = System::new_all();
 
     system.refresh_all();
 
     let app_state = app::AppState {
+        components: Arc::new(Mutex::new(components)),
+        disks: Arc::new(Mutex::new(disks)),
+        networks: Arc::new(Mutex::new(networks)),
         system: Arc::new(Mutex::new(system))
     };
 
@@ -40,11 +46,11 @@ async fn main() -> std::io::Result<()> {
                 web::scope("")
                 .wrap(middleware::Compress::default())
                 .configure(|config| {
-                    services::health::configure_health_check_service(config);
+                    services::system::configure_system_monitor_service(config);
                 })
             )
             .service(
-                web::scope("")
+                web::scope("/health")
                     .wrap(middleware::Compress::default())
                     .configure(|config| {
                         services::health::configure_health_check_service(config);
