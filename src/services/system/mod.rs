@@ -10,6 +10,14 @@ pub async fn handler(app_state: web::Data<AppState>) -> impl Responder {
     let networks = app_state.networks.lock().unwrap();
     let mut system = app_state.system.lock().unwrap();
 
+    for component in components.list() {
+        println!("{component:?}");
+    }
+
+    for disk in disks.list() {
+        println!("{disk:?}");
+    }
+
     let mut system_reporter = SystemReporter::new(&components, &disks, &networks, &mut system);
     let system_report = system_reporter.build_report();
     let html = Html::new(system_report.into_html());

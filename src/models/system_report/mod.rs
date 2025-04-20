@@ -1,28 +1,25 @@
-use sysinfo::{Components, Disks, Networks, System};
+use sysinfo::{Components, Cpu, Disks, Networks, System};
 
 use crate::utils;
 
-pub struct SystemReport {
+pub struct SystemReport<'a> {
     pub total_memory: u64,
     pub used_memory: u64,
     pub available_memory: u64,
-
     pub total_swap: u64,
     pub used_swap: u64,
     pub available_swap: u64,
-
     pub system_name: String,
     pub system_kernal_version: String,
     pub system_os_version: String,
     pub system_host_name: String,
-
+    pub cpus: &'a [Cpu],
     pub num_cpus: u8,
     pub cpu_arch: String,
-
     pub platform: String,
 }
 
-impl SystemReport {
+impl<'a> SystemReport<'_> {
     pub fn into_html(&self) -> String {
         format!(
             r#"
@@ -59,22 +56,22 @@ impl SystemReport {
                         </div>
                         <div class="info-row">
                             <span class="info-label">Total Memory</span>
-                            <span class="info-value">{}</span>
+                            <span class="info-value">{:.3} GB</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Used Memory</span>
-                            <span class="info-value">{}</span>
+                            <span class="info-value">{:.3} GB</span>
                         </div>
                         <div class="progress-container">
                             <div class="progress-bar" style="width: {}%"></div>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Available Memory</span>
-                            <span class="info-value">{}</span>
+                            <span class="info-value">{:.3} GB</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Swap Usage</span>
-                            <span class="info-value">{} MB / {} GB</span>
+                            <span class="info-value">{:.3} MB / {:.3} GB</span>
                         </div>
                     </div>
 
@@ -176,7 +173,6 @@ impl SystemReport {
                         </div>
                     </div>
                 </div>
-        
             "#,
             &self.system_os_version,
             &self.system_kernal_version,
@@ -236,6 +232,8 @@ impl<'a> SystemReporter<'a> {
         // Number of CPUs:
         let num_cpus = self.system.cpus().len();
 
+        let cpus = self.system.cpus();
+
         SystemReport {
             total_memory,
             used_memory,
@@ -247,6 +245,7 @@ impl<'a> SystemReporter<'a> {
             system_kernal_version,
             system_os_version,
             system_host_name,
+            cpus,
             num_cpus: num_cpus.try_into().unwrap(),
             cpu_arch,
             platform: distribution_id,
