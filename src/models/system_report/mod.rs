@@ -292,7 +292,8 @@ impl<'a> SystemReporter<'a> {
     }
 
     pub fn build_report(&mut self) -> SystemReport {
-        // Refresh system information handles:
+        
+        // Refresh system handle specifics
         self.system.refresh_specifics(
             RefreshKind::nothing()
                 .with_cpu(CpuRefreshKind::everything())
@@ -305,7 +306,7 @@ impl<'a> SystemReporter<'a> {
 
         let platform = System::distribution_id();
         let cpu_arch = System::cpu_arch();
-        let num_cpus = self.system.cpus().len();
+        let num_cpus: u8 = self.system.cpus().len().try_into().expect("(Error): This machine supercedes 256 individual cpu units");
 
         let system_name = System::name().unwrap_or_else(|| "Undetermined".to_string());
         let system_kernal_version =
@@ -322,11 +323,14 @@ impl<'a> SystemReporter<'a> {
             .set_total_memory(self.system.total_memory())
             .set_available_swap(self.system.total_swap() - self.system.used_swap())
             .set_used_swap(self.system.used_swap())
+            .set_total_swap(self.system.total_swap())
             .set_platform(&platform)
             .set_system_name(&system_name)
             .set_system_host_name(&system_host_name)
             .set_system_kernal_version(&system_kernal_version)
             .set_system_os_version(&system_os_version)
+            .set_cpu_arch(&cpu_arch)
+            .set_num_cpus(num_cpus)
             .build();
 
         let mut cpu_info_reports: Vec<CpuReportInfo> = Vec::new();
@@ -370,6 +374,7 @@ impl<'a> SystemReporter<'a> {
                 .set_available_space(available_space)
                 .set_used_space(used_space)
                 .set_total_space(total_space)
+                .set_percentage_free(utils::convert_to_percent(available_space, total_space))
                 .set_usage_total_read_bytes(total_read_bytes)
                 .set_usage_total_write_bytes(total_written_bytes)
                 .set_kind(format!("{:#?}", kind).as_str())
