@@ -1,16 +1,15 @@
 use actix_web::{Error, HttpResponse, Responder, web};
 use futures::{future::ok, stream::once};
-use std::sync::Arc;
 
 use crate::{app::AppState, models::system_report::SystemReporter, ui::Html};
 
 pub async fn handler(app_state: web::Data<AppState>) -> impl Responder {
-    let components = app_state.components.lock().unwrap();
-    let disks = app_state.disks.lock().unwrap();
+    let mut components = app_state.components.lock().unwrap();
+    let mut disks = app_state.disks.lock().unwrap();
     let networks = app_state.networks.lock().unwrap();
     let mut system = app_state.system.lock().unwrap();
 
-    let mut system_reporter = SystemReporter::new(&components, &disks, &networks, &mut system);
+    let mut system_reporter = SystemReporter::new(&mut components, &mut disks, &networks, &mut system);
     let system_report = system_reporter.build_report();
     let html = Html::new(system_report.into_html());
     let page = html.into_page();

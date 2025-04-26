@@ -1,35 +1,33 @@
-use sysinfo::{Component, Components, Cpu, Disk, Disks, Networks, System};
+use sysinfo::{
+    Components, CpuRefreshKind, Disks, MemoryRefreshKind, Networks, RefreshKind, System,
+};
 
-use crate::utils;
+use crate::{
+    models::{
+        builders::{
+            component_info::ComponentReportInfoBuilder, cpu_info::CpuInfoBuilder,
+            disk_info::DiskReportInfoBuilder, system_info_builder::SystemInfoBuilder,
+        },
+        data_objects::{
+            component_info::ComponentReportInfo, cpu_info::CpuReportInfo,
+            disk_info::DiskReportInfo, system_info::SystemReportInfo,
+        },
+        temperature_severity_status::TemperatureSeverityStatus,
+    },
+    utils,
+};
 
-enum TemperatureSeverityStatus {
-    Normal,
-    High,
-    Critical,
-    Unknown(String),
+pub struct NetworkReportInfo {}
+
+pub struct SystemReport {
+    components_report_info: Vec<ComponentReportInfo>,
+    cpu_report_info: Vec<CpuReportInfo>,
+    disks_report_info: Vec<DiskReportInfo>,
+    network_report_info: NetworkReportInfo,
+    system_info: SystemReportInfo,
 }
 
-pub struct SystemReport<'a, 'b, 'c> {
-    pub platform: String,
-    pub available_swap: u64,
-    pub system_name: String,
-
-    pub total_memory: u64,
-    pub used_memory: u64,
-    pub available_memory: u64,
-    pub total_swap: u64,
-    pub used_swap: u64,
-    pub system_kernal_version: String,
-    pub system_os_version: String,
-    pub system_host_name: String,
-    pub cpus: &'a [Cpu],
-    pub num_cpus: u8,
-    pub cpu_arch: String,
-    pub components: Vec<&'b Component>,
-    pub disks: Vec<&'c Disk>,
-}
-
-impl<'a, 'b, 'c> SystemReport<'_, '_, '_> {
+impl SystemReport {
     pub fn into_html(&self) -> String {
         format!(
             r#"
@@ -40,13 +38,13 @@ impl<'a, 'b, 'c> SystemReport<'_, '_, '_> {
                     <!-- Memory Card -->
                     {}
 
-                    <!-- CPU Card -->
+                    <!-- CPU Cards -->
                     {}
 
                     <!-- Temperature Card -->
                     {}
 
-                    <!-- Disk Card -->
+                    <!-- Disks Cards -->
                     {}
                 </div>
             "#,
@@ -60,7 +58,7 @@ impl<'a, 'b, 'c> SystemReport<'_, '_, '_> {
 
     fn convert_cpus_to_markup_cards(&self) -> String {
         let mut cpu_markup = String::new();
-        for cpu in self.cpus {
+        for cpu in &self.cpu_report_info {
             let card = format!(
                 r#"
                     <!-- CPU Card -->
@@ -90,10 +88,7 @@ impl<'a, 'b, 'c> SystemReport<'_, '_, '_> {
                         </div>
                     </div>
                 "#,
-                &cpu.brand(),
-                &cpu.name(),
-                &cpu.cpu_usage(),
-                &cpu.cpu_usage(),
+                &cpu.brand, &cpu.name, &cpu.usage_percent, &cpu.usage_percent,
             );
 
             cpu_markup.push_str(&card);
@@ -132,11 +127,11 @@ impl<'a, 'b, 'c> SystemReport<'_, '_, '_> {
                     </div>
                 </div>
             "#,
-            &self.system_os_version,
-            &self.system_kernal_version,
-            &self.num_cpus,
-            &self.cpu_arch,
-            &self.system_host_name,
+            &self.system_info.system_os_version,
+            &self.system_info.system_kernal_version,
+            &self.system_info.num_cpus,
+            &self.system_info.cpu_arch,
+            &self.system_info.system_host_name,
         )
     }
 
@@ -169,19 +164,19 @@ impl<'a, 'b, 'c> SystemReport<'_, '_, '_> {
                     </div>
                 </div>
             "#,
-            utils::convert_bytes_to_gbs(self.total_memory),
-            utils::convert_bytes_to_gbs(self.used_memory),
-            utils::convert_to_percent(self.used_memory, self.total_memory),
-            utils::convert_bytes_to_gbs(self.available_memory),
-            utils::convert_bytes_to_mbs(self.used_swap),
-            utils::convert_bytes_to_gbs(self.total_swap),
+            utils::convert_bytes_to_gbs(self.system_info.total_memory),
+            utils::convert_bytes_to_gbs(self.system_info.used_memory),
+            utils::convert_to_percent(self.system_info.used_memory, self.system_info.total_memory),
+            utils::convert_bytes_to_gbs(self.system_info.available_memory),
+            utils::convert_bytes_to_mbs(self.system_info.used_swap),
+            utils::convert_bytes_to_gbs(self.system_info.total_swap),
         )
     }
 
     fn convert_disks_to_markup_card(&self) -> String {
         let mut cards = String::new();
 
-        for disk in &self.disks {
+        let _ = &self.disks_report_info.iter().for_each(|disk| {
             let card = format!(
                 r#"
                     <div class="card">
@@ -214,19 +209,19 @@ impl<'a, 'b, 'c> SystemReport<'_, '_, '_> {
                         </div>
                     </div>        
                 "#,
-                disk.name(),
-                disk.mount_point(),
-                disk.file_system(),
-                utils::convert_bytes_to_gbs(disk.total_space()),
-                utils::convert_bytes_to_gbs(disk.available_space()),
-                utils::convert_to_percent(disk.available_space(), disk.total_space()),
-                100.0_f64 - utils::convert_to_percent(disk.available_space(), disk.total_space()),
-                disk.usage().total_read_bytes,
-                disk.usage().total_written_bytes
+                disk.name,
+                disk.mount_point,
+                disk.file_system,
+                utils::convert_bytes_to_gbs(disk.total_space),
+                utils::convert_bytes_to_gbs(disk.available_space),
+                utils::convert_to_percent(disk.available_space, disk.total_space),
+                100.0_f64 - utils::convert_to_percent(disk.available_space, disk.total_space),
+                disk.usage_total_read_bytes,
+                disk.usage_total_write_bytes
             );
 
             cards.push_str(&card);
-        }
+        });
 
         cards
     }
@@ -242,13 +237,10 @@ impl<'a, 'b, 'c> SystemReport<'_, '_, '_> {
             "#
         );
 
-        for component in &self.components[..] {
-            let temp = match component.temperature() {
-                Some(value) => value,
-                None => 0.0_f32,
-            };
-
-            let critical = component.critical();
+        let _ = &self.components_report_info.iter().for_each(|component| {
+            let severity = TemperatureSeverityStatus::get_severity_color_based_on_temperature_status(
+                component.status.clone()
+            );
 
             let card = format!(
                 r#"
@@ -259,15 +251,13 @@ impl<'a, 'b, 'c> SystemReport<'_, '_, '_> {
                         </div>
                     </div>
                 "#,
-                component.label(),
-                SystemReport::get_severity_color_based_on_temperature_status(
-                    SystemReport::get_temperature_status(temp, critical)
-                ),
-                temp
+                &component.label,
+                severity,
+                &component.temperature,
             );
 
             cards.push_str(&card);
-        }
+        });
 
         cards.push_str(
             r#"
@@ -277,50 +267,19 @@ impl<'a, 'b, 'c> SystemReport<'_, '_, '_> {
 
         cards
     }
-
-    fn get_temperature_status(
-        temperature: f32,
-        critical: Option<f32>,
-    ) -> TemperatureSeverityStatus {
-        if temperature == 0.0_f32 {
-            return TemperatureSeverityStatus::Unknown("Missing-Temperature".to_string());
-        };
-
-        match critical {
-            Some(critical_temp) => {
-                if temperature < (critical_temp - 14.0_f32) {
-                    TemperatureSeverityStatus::Normal
-                } else if temperature < (critical_temp - 5.0_f32) {
-                    TemperatureSeverityStatus::High
-                } else {
-                    TemperatureSeverityStatus::Critical
-                }
-            }
-            None => TemperatureSeverityStatus::Unknown("Missing-Critical".to_string()),
-        }
-    }
-
-    fn get_severity_color_based_on_temperature_status(status: TemperatureSeverityStatus) -> String {
-        match status {
-            TemperatureSeverityStatus::Critical => String::from("danger"),
-            TemperatureSeverityStatus::High => String::from("warning"),
-            TemperatureSeverityStatus::Normal => String::from("normal"),
-            TemperatureSeverityStatus::Unknown(_) => String::from("normal"),
-        }
-    }
 }
 
 pub struct SystemReporter<'a> {
-    components: &'a Components,
-    disks: &'a Disks,
+    components: &'a mut Components,
+    disks: &'a mut Disks,
     networks: &'a Networks,
     system: &'a mut System,
 }
 
 impl<'a> SystemReporter<'a> {
     pub fn new(
-        components: &'a Components,
-        disks: &'a Disks,
+        components: &'a mut Components,
+        disks: &'a mut Disks,
         networks: &'a Networks,
         system: &'a mut System,
     ) -> Self {
@@ -333,18 +292,21 @@ impl<'a> SystemReporter<'a> {
     }
 
     pub fn build_report(&mut self) -> SystemReport {
-        self.system.refresh_all(); // Switch to refresh_specifics
+        // Refresh system information handles:
+        self.system.refresh_specifics(
+            RefreshKind::nothing()
+                .with_cpu(CpuRefreshKind::everything())
+                .with_memory(MemoryRefreshKind::everything()),
+        );
+
+        self.system.refresh_cpu_usage();
+        std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
         self.system.refresh_cpu_usage();
 
-        // RAM and swap information:
-        let total_memory = self.system.total_memory();
-        let used_memory = self.system.used_memory();
-        let total_swap = self.system.total_swap();
-        let used_swap = self.system.used_swap();
-
-        // System information:
-        let distribution_id = System::distribution_id();
+        let platform = System::distribution_id();
         let cpu_arch = System::cpu_arch();
+        let num_cpus = self.system.cpus().len();
+
         let system_name = System::name().unwrap_or_else(|| "Undetermined".to_string());
         let system_kernal_version =
             System::kernel_version().unwrap_or_else(|| "Undetermined".to_string());
@@ -352,30 +314,104 @@ impl<'a> SystemReporter<'a> {
             System::long_os_version().unwrap_or_else(|| "Undetermined".to_string());
         let system_host_name = System::host_name().unwrap_or_else(|| "Undetermined".to_string());
 
-        // Number of CPUs:
-        let num_cpus = self.system.cpus().len();
-        let cpus = self.system.cpus();
+        let mut system_info_builder = SystemInfoBuilder::new();
 
-        let disks: Vec<_> = self.disks.into_iter().collect();
-        let components: Vec<_> = self.components.into_iter().collect();
+        let system_info = system_info_builder
+            .set_available_memory(self.system.available_memory())
+            .set_used_memory(self.system.used_memory())
+            .set_total_memory(self.system.total_memory())
+            .set_available_swap(self.system.total_swap() - self.system.used_swap())
+            .set_used_swap(self.system.used_swap())
+            .set_platform(&platform)
+            .set_system_name(&system_name)
+            .set_system_host_name(&system_host_name)
+            .set_system_kernal_version(&system_kernal_version)
+            .set_system_os_version(&system_os_version)
+            .build();
+
+        let mut cpu_info_reports: Vec<CpuReportInfo> = Vec::new();
+        let cpus = self.system.cpus();
+        for cpu in cpus {
+            let cpu_brand = cpu.brand();
+            let cpu_frequency = cpu.frequency();
+            let cpu_name = cpu.name();
+            let cpu_usage = cpu.cpu_usage();
+            let cpu_vendor_id = cpu.vendor_id();
+
+            let cpu_report_info_builder = CpuInfoBuilder::new();
+            let cpu_report_info = cpu_report_info_builder
+                .set_brand(cpu_brand.to_string())
+                .set_frequency(cpu_frequency)
+                .set_name(cpu_name.to_string())
+                .set_usage_percent(cpu_usage)
+                .set_vendor_id(cpu_vendor_id.to_string())
+                .build();
+
+            cpu_info_reports.push(cpu_report_info);
+        }
+
+        let mut disks_info_reports: Vec<DiskReportInfo> = Vec::new();
+        for disk in self.disks.iter_mut() {
+            disk.refresh();
+
+            let name = disk.name();
+            let mount_point = disk.mount_point();
+            let file_system = disk.file_system();
+            let kind = disk.kind();
+            let total_space = disk.total_space();
+            let available_space = disk.available_space();
+            let used_space = total_space - available_space;
+            let usage = disk.usage();
+            let total_read_bytes = usage.total_read_bytes;
+            let total_written_bytes = usage.total_written_bytes;
+
+            let disk_report_info_builder = DiskReportInfoBuilder::new();
+            let disk_report_info = disk_report_info_builder
+                .set_available_space(available_space)
+                .set_used_space(used_space)
+                .set_total_space(total_space)
+                .set_usage_total_read_bytes(total_read_bytes)
+                .set_usage_total_write_bytes(total_written_bytes)
+                .set_kind(format!("{:#?}", kind).as_str())
+                .set_file_system(format!("{:#?}", file_system).as_str())
+                .set_mount_point(format!("{:#?}", mount_point).as_str())
+                .set_name(format!("{:#?}", name).as_str())
+                .build();
+
+            disks_info_reports.push(disk_report_info);
+        }
+
+        let mut component_info_reports: Vec<ComponentReportInfo> = Vec::new();
+        for component in self.components.iter_mut() {
+            component.refresh();
+
+            let label = component.label();
+            let temperature = match component.temperature() {
+                Some(temp) => temp,
+                None => 0.0_f32,
+            };
+            let critical = component.critical();
+
+            let component_report_info_builder = ComponentReportInfoBuilder::new();
+            let component_report_info = component_report_info_builder
+                .set_label(label.to_string())
+                .set_temperature(temperature)
+                .set_critical_temperature(critical)
+                .set_status(TemperatureSeverityStatus::get_temperature_status(
+                    temperature,
+                    critical,
+                ))
+                .build();
+
+            component_info_reports.push(component_report_info);
+        }
 
         SystemReport {
-            components,
-            disks,
-            total_memory,
-            used_memory,
-            available_memory: total_memory - used_memory,
-            total_swap,
-            used_swap,
-            available_swap: total_swap - used_swap,
-            system_name,
-            system_kernal_version,
-            system_os_version,
-            system_host_name,
-            cpus,
-            num_cpus: num_cpus.try_into().unwrap(),
-            cpu_arch,
-            platform: distribution_id,
+            components_report_info: component_info_reports,
+            cpu_report_info: cpu_info_reports,
+            disks_report_info: disks_info_reports,
+            network_report_info: NetworkReportInfo {},
+            system_info,
         }
     }
 }
