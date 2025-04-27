@@ -14,6 +14,8 @@ mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    
+    // Lood environment variables from .env into scope
     env::setup_env();
 
     let components = Components::new_with_refreshed_list();
