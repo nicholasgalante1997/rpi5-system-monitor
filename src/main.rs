@@ -1,4 +1,5 @@
-use actix_web::{App, HttpServer, dev::Service, middleware, web};
+use actix_cors::Cors;
+use actix_web::{App, HttpServer, dev::Service, http, middleware, web};
 use debugrs::debug;
 use sysinfo::{Components, Disks, Networks, System};
 
@@ -14,8 +15,6 @@ mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    
-    // Lood environment variables from .env into scope
     env::setup_env();
 
     let components = Components::new_with_refreshed_list();
@@ -33,6 +32,12 @@ async fn main() -> std::io::Result<()> {
     };
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![http::header::ACCEPT, http,ttp::header::CONTENT_TYPE])
+            .max_age(3600);
+
         App::new()
             .app_data(web::Data::new(app_state.clone()))
             .wrap_fn(|req, srv| {
