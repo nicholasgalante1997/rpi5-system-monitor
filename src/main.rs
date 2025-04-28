@@ -1,5 +1,10 @@
 use actix_cors::Cors;
-use actix_web::{App, HttpServer, dev::Service, http, middleware, web};
+use actix_files;
+use actix_web::{
+    App, HttpResponse, HttpServer,
+    dev::{Service, ServiceRequest, ServiceResponse, fn_service},
+    http, middleware, web,
+};
 use debugrs::debug;
 use sysinfo::{Components, Disks, Networks, System};
 
@@ -62,20 +67,32 @@ async fn main() -> std::io::Result<()> {
                     .wrap(middleware::Compress::default())
                     .configure(|config| {
                         config.service(services::http_views::routes::render_overview_as_html);
+                        config.service(services::http_views::routes::render_cpu_as_html);
+                        config.service(services::http_views::routes::render_memory_as_html);
+                        config.service(services::http_views::routes::render_disks_as_html);
                     }),
             )
             .service(
-                web::scope("/health")
+                web::scope("")
                     .wrap(middleware::Compress::default())
                     .configure(|config| {
-                        services::health::configure_health_check_service(config);
-                    }),
-            )
-            .service(
-                web::scope("/")
-                    .wrap(middleware::Compress::default())
-                    .configure(|config| {
-                        services::system::configure_system_monitor_service(config);
+                        config.service(
+                            actix_files::Files::new("", "./public")
+                                .use_last_modified(true)
+                                .use_etag(true)
+                                .prefer_utf8(true)
+                                .index_file("index.html")
+                                .redirect_to_slash_directory()
+                                .show_files_listing()
+                                .default_handler(fn_service(|req: ServiceRequest| async {
+                                    let mut error_logger = crate::log::logger()
+                                        .extend("static-files-error".to_string());
+                                    error_logger.write("File not found!".to_string());
+                                    let (req, _) = req.into_parts();
+                                    let res = HttpResponse::InternalServerError().finish();
+                                    Ok(ServiceResponse::new(req, res))
+                                })),
+                        );
                     }),
             )
     })

@@ -1,5 +1,6 @@
-use crate::models::data_objects::disk_info::DiskReportInfo;
-use crate::models::data_objects::system_info::SystemReportInfo;
+use crate::models::data_objects::{
+    cpu_info::CpuReportInfo, disk_info::DiskReportInfo, system_info::SystemReportInfo,
+};
 use crate::utils;
 
 pub struct Html {
@@ -377,6 +378,237 @@ impl HttpViews {
             system_info.system_kernal_version,
             utils::format_uptime(system_info.uptime_in_seconds),
             system_info.system_os_version,
+        )
+    }
+
+    pub fn get_cpu_view(system_info: &SystemReportInfo, cpu_info: &Vec<CpuReportInfo>) -> String {
+        let brand = format!("{} ({})", cpu_info[0].brand, cpu_info[0].name);
+        format!(
+            r#"
+            <div id="cpu" class="tab-content">
+                <div class="section-header">
+                    <h2 class="section-title">CPU Information</h2>
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon"></div>
+                                CPU Usage
+                            </div>
+                        </div>
+                        <div class="card-value" id="cpu-usage-detail">{}%</div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="cpu-progress-detail" style="width: {}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon"></div>
+                            CPU Details
+                        </div>
+                    </div>
+                    <div>
+                        <div class="detail-row">
+                            <div class="detail-label">Model</div>
+                            <div class="detail-value" id="cpu-model">{}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Cores</div>
+                            <div class="detail-value" id="cpu-cores">{}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon"></div>
+                            Core Utilization
+                        </div>
+                    </div>
+                    <div id="core-utilization">
+                        {}
+                    </div>
+                </div>
+            </div>
+            "#,
+            &system_info.total_cpu_usage,
+            &system_info.total_cpu_usage,
+            brand,
+            &system_info.num_cpus,
+            &HttpViews::get_cpu_list_view(cpu_info)
+        )
+    }
+
+    pub fn get_memory_view(system_info: &SystemReportInfo) -> String {
+        format!(
+            r#"
+            <div id="memory" class="tab-content">
+                <div class="section-header">
+                    <h2 class="section-title">Memory Statistics</h2>
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon"></div>
+                                Physical Memory
+                            </div>
+                        </div>
+                        <div class="card-value" id="memory-usage-detail">0 GB / {} GB</div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="memory-progress-detail" style="width: {}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon"></div>
+                                Swap
+                            </div>
+                        </div>
+                        <div class="card-value" id="swap-usage">0 GB / {} GB</div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="swap-progress" style="width: {}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon"></div>
+                            Memory Distribution
+                        </div>
+                    </div>
+                    <div>
+                        <div class="detail-row">
+                            <div class="detail-label">Used</div>
+                            <div class="detail-value" id="mem-used">{} GB</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Free</div>
+                            <div class="detail-value" id="mem-free">{} GB</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            "#,
+            utils::convert_bytes_to_gbs(system_info.total_memory),
+            utils::convert_to_percent(system_info.used_memory, system_info.total_memory),
+            utils::convert_bytes_to_gbs(system_info.total_swap),
+            utils::convert_to_percent(system_info.used_swap, system_info.total_swap),
+            utils::convert_bytes_to_gbs(system_info.used_memory),
+            utils::convert_bytes_to_gbs(system_info.available_memory)
+        )
+    }
+
+    pub fn get_disks_view(disks_info: &Vec<DiskReportInfo>) -> String {
+        format!(
+            r#"
+            <div id="disk" class="tab-content">
+                <div class="section-header">
+                    <h2 class="section-title">Disk Usage</h2>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon"></div>
+                            Storage Devices
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Mount Point</th>
+                                <th>Size</th>
+                                <th>Used</th>
+                                <th>Available</th>
+                                <th>Usage</th>
+                                <th>Write Rate</th>
+                                <th>Read Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disk-table-body">
+                            {}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            "#,
+            &HttpViews::get_disk_table_view(disks_info)
+        )
+    }
+
+    pub fn get_cpu_list_view(cpu_info: &Vec<CpuReportInfo>) -> String {
+        let mut cpu_list = String::new();
+        for cpu in cpu_info {
+            cpu_list.push_str(&HttpViews::get_single_cpu_view(cpu));
+        }
+        cpu_list
+    }
+
+    pub fn get_single_cpu_view(cpu_info: &CpuReportInfo) -> String {
+        format!(
+            r#"
+            <span class="cpu-info-chip">
+                <span class="cpu-info-label">Model</span>: {}<br>
+                <span class="cpu-info-label">Core Num</span>: {}<br>
+                <span class="cpu-info-label">Usage</span>: {}%<br>
+                <span class="cpu-info-label">Frequency</span>: {} MHz<br>
+                <span class="cpu-info-label">Vendor ID</span>: {}<br>
+            </span>
+            "#,
+            cpu_info.brand,
+            cpu_info.name,
+            cpu_info.usage_percent,
+            cpu_info.frequency,
+            cpu_info.vendor_id
+        )
+    }
+
+    pub fn get_disk_table_view(disks_info: &Vec<DiskReportInfo>) -> String {
+        let mut disk_table = String::new();
+        for disk in disks_info {
+            disk_table.push_str(&HttpViews::get_disk_usage_table_row_view(disk));
+        }
+        disk_table
+    }
+
+    pub fn get_disk_usage_table_row_view(disk_info: &DiskReportInfo) -> String {
+        format!(
+            r#"
+            <tr>
+                <td>{}</td>
+                <td>{} GB</td>
+                <td>{} GB</td>
+                <td>{} GB</td>
+                <td>{}%</td>
+                <td>{} MB</td>
+                <td>{} MB</td>
+            </tr>
+            "#,
+            disk_info.mount_point,
+            utils::convert_bytes_to_gbs(disk_info.total_space),
+            utils::convert_bytes_to_gbs(disk_info.used_space),
+            utils::convert_bytes_to_gbs(disk_info.total_space - disk_info.used_space),
+            utils::convert_to_percent(disk_info.used_space, disk_info.total_space),
+            utils::convert_bytes_to_mbs(disk_info.usage_total_write_bytes),
+            utils::convert_bytes_to_mbs(disk_info.usage_total_read_bytes)
         )
     }
 }
