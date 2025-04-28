@@ -1,6 +1,10 @@
+import ViewEngine from "./Views.js";
+
 class AppRouter {
   /** @type {Array<{ path: string, view: string }>} */
   routes;
+
+  views = new ViewEngine();
 
   /**
    * @param {Array<{ path: string, view: string }>} routes
@@ -95,8 +99,6 @@ class AppRouter {
     console.info('Matched route:', match);
     const { view, params } = match;
 
-    
-
     try {
       await this.views.render(view, params);
     } catch (error) {
@@ -108,19 +110,17 @@ class AppRouter {
   }
 
   runSideEffects() {
-    this.#updateNav();
-    hljs.highlightAll();
-  }
-
-  #updateNav() {
-    document.querySelectorAll('nav a').forEach((link) => {
-      if (link.getAttribute('href') === location.pathname) {
-        link.classList.add('active');
+    const tabs = document.querySelectorAll('[data-tab]');
+    tabs.forEach((tab) => {
+      const tabId = tab.dataset.tab
+      if (tabId === window.location.pathname.slice(1)) {
+        tab.classList.add('active');
       } else {
-        link.classList.remove('active');
+        tab.classList.remove('active');
       }
     });
   }
+
 }
 
 export default AppRouter;

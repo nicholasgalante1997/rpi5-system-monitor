@@ -9,6 +9,7 @@ class App {
   }
 
   init() {
+    this.router.router();
     this.setupEventListeners();
   }
 
@@ -21,10 +22,19 @@ class App {
       const link = e.target.closest("[data-link]");
       if (link) {
         e.preventDefault();
-        // this.#router.push(link.href);
-        // Scroller.top();
+        this.router.push(link.href);
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
       }
     });
+  }
+
+  setupPopStateEventListeners() {
+    window.addEventListener("popstate", () => {
+      this.router.router();
+    })
   }
 }
 

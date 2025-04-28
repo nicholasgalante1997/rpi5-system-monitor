@@ -1,4 +1,7 @@
 export default {
+    app: {
+        elementId: 'dyn-app'
+    },
     routes: [
         {
             path: "/",

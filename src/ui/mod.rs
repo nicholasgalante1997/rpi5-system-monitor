@@ -385,7 +385,7 @@ impl HttpViews {
         let brand = format!("{} ({})", cpu_info[0].brand, cpu_info[0].name);
         format!(
             r#"
-            <div id="cpu" class="tab-content">
+            <div id="cpu" class="tab-content active">
                 <div class="section-header">
                     <h2 class="section-title">CPU Information</h2>
                 </div>
@@ -450,7 +450,7 @@ impl HttpViews {
     pub fn get_memory_view(system_info: &SystemReportInfo) -> String {
         format!(
             r#"
-            <div id="memory" class="tab-content">
+            <div id="memory" class="tab-content active">
                 <div class="section-header">
                     <h2 class="section-title">Memory Statistics</h2>
                 </div>
@@ -519,7 +519,7 @@ impl HttpViews {
     pub fn get_disks_view(disks_info: &Vec<DiskReportInfo>) -> String {
         format!(
             r#"
-            <div id="disk" class="tab-content">
+            <div id="disk" class="tab-content active">
                 <div class="section-header">
                     <h2 class="section-title">Disk Usage</h2>
                 </div>
