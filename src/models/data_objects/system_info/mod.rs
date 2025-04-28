@@ -1,3 +1,6 @@
+use serde::{Serialize, Deserialize};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SystemReportInfo {
     pub platform: String,
     pub system_name: String,
@@ -12,4 +15,6 @@ pub struct SystemReportInfo {
     pub total_memory: u64,
     pub cpu_arch: String,
     pub num_cpus: u8,
+    pub total_cpu_usage: f32,
+    pub uptime_in_seconds: u64,
 }

@@ -15,54 +15,56 @@
     </script>
 </head>
 <body>
+    
     <!-- Header -->
     <header>
         <div class="header-logo">
             <div class="logo-icon">L</div>
             <h1>Linux Monitor</h1>
         </div>
-        <div class="last-updated">Last updated: <span data-z="last-updated-time" id="last-updated-time">Just now</span></div>
+        <div class="last-updated">Last updated: <span data-dyn-content="last-updated-time" id="last-updated-time">Just now</span></div>
     </header>
 
     <div class="dashboard-container">
+        
         <!-- Sidebar -->
         <aside class="sidebar">
             <ul class="sidebar-menu">
                 <li class="menu-item active" data-tab="overview">
-                    <a href="#">
+                    <a data-link href="/">
                         <span class="menu-icon"></span>
                         <span>Overview</span>
                     </a>
                 </li>
                 <li class="menu-item" data-tab="cpu">
-                    <a href="#">
+                    <a data-link href="/cpu">
                         <span class="menu-icon"></span>
                         <span>CPU</span>
                     </a>
                 </li>
                 <li class="menu-item" data-tab="memory">
-                    <a href="#">
+                    <a data-link href="/memory">
                         <span class="menu-icon"></span>
                         <span>Memory</span>
                     </a>
                 </li>
                 <li class="menu-item" data-tab="disk">
-                    <a href="#">
+                    <a data-link href="/disks">
                         <span class="menu-icon"></span>
                         <span>Disk</span>
                     </a>
                 </li>
-                <li class="menu-item" data-tab="network">
-                    <a href="#">
+                <li class="menu-item" data-tab="components">
+                    <a data-link href="/components">
                         <span class="menu-icon"></span>
-                        <span>Network</span>
+                        <span>Components</span>
                     </a>
                 </li>
             </ul>
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content">
+        <main id="dyn-app" class="main-content">
             <!-- Overview Tab -->
             <div id="overview" class="tab-content active">
                 <div class="section-header">

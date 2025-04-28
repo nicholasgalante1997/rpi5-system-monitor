@@ -34,12 +34,19 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         let cors = Cors::default()
             .allow_any_origin()
-            .allowed_methods(vec!["GET", "POST"])
-            .allowed_headers(vec![http::header::ACCEPT, http,ttp::header::CONTENT_TYPE])
+            .allowed_methods(vec!["HEAD", "OPTIONS", "GET"])
+            .allowed_headers(vec![
+                http::header::ACCEPT,
+                http::header::ACCEPT_ENCODING,
+                http::header::CONTENT_ENCODING,
+                http::header::CONTENT_LENGTH,
+                http::header::CONTENT_TYPE,
+            ])
             .max_age(3600);
 
         App::new()
             .app_data(web::Data::new(app_state.clone()))
+            .wrap(cors)
             .wrap_fn(|req, srv| {
                 let logline = format!("{} {}", req.method(), req.path());
                 debug!(log::logger(), logline);
@@ -50,6 +57,13 @@ async fn main() -> std::io::Result<()> {
                     Ok(res)
                 }
             })
+            .service(
+                web::scope("/api")
+                    .wrap(middleware::Compress::default())
+                    .configure(|config| {
+                        config.service(services::http_views::routes::render_overview_as_html);
+                    }),
+            )
             .service(
                 web::scope("/health")
                     .wrap(middleware::Compress::default())

@@ -1,3 +1,7 @@
+use crate::models::data_objects::disk_info::DiskReportInfo;
+use crate::models::data_objects::system_info::SystemReportInfo;
+use crate::utils;
+
 pub struct Html {
     content: String,
 }
@@ -251,5 +255,128 @@ impl Html {
             }
         </style>
         "#.to_string()
+    }
+}
+
+pub struct HttpViews;
+
+impl HttpViews {
+    pub fn get_overview_view(
+        system_info: &SystemReportInfo,
+        disks_info: &Vec<DiskReportInfo>,
+    ) -> String {
+        format!(
+            r#"
+            <div id="overview" class="tab-content active">
+                <div class="section-header">
+                    <h2 class="section-title">System Overview</h2>
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon"></div>
+                                CPU Usage
+                            </div>
+                        </div>
+                        <div class="card-value" id="cpu-usage">{:.2}%</div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="cpu-progress" style="width: {:.2}%"></div>
+                            </div>
+                            <div class="progress-stats">
+                                <span>0%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                        <div class="card-description">Current CPU utilization across all cores</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon"></div>
+                                Memory Usage
+                            </div>
+                        </div>
+                        <div class="card-value" id="memory-usage">{:.2} GB</div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="memory-progress" style="width: {}%"></div>
+                            </div>
+                            <div class="progress-stats">
+                                <span>0 GB</span>
+                                <span id="total-memory">{} GB</span>
+                            </div>
+                        </div>
+                        <div class="card-description">Physical memory currently in use</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon"></div>
+                                Disk Usage
+                            </div>
+                        </div>
+                        <div class="card-value" id="disk-usage">{:.2} GB</div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="disk-progress" style="width: {:.1}%"></div>
+                            </div>
+                            <div class="progress-stats">
+                                <span>0 GB</span>
+                                <span id="total-disk">{:.2} GB</span>
+                            </div>
+                        </div>
+                        <div class="card-description">Primary storage utilization</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon"></div>
+                            System Information
+                        </div>
+                    </div>
+                    <div>
+                        <div class="detail-row">
+                            <div class="detail-label">Hostname</div>
+                            <div class="detail-value" id="hostname">{}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Kernel Version</div>
+                            <div class="detail-value" id="kernel-version">{}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Uptime</div>
+                            <div class="detail-value" id="uptime">{}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">OS</div>
+                            <div class="detail-value" id="os-info">{}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            "#,
+            system_info.total_cpu_usage,
+            system_info.total_cpu_usage,
+            utils::convert_bytes_to_gbs(system_info.used_memory),
+            utils::convert_to_percent(system_info.used_memory, system_info.total_memory),
+            utils::convert_bytes_to_gbs(system_info.total_memory),
+            utils::convert_bytes_to_gbs(utils::get_total_disk_usage_across_all_disks(disks_info)),
+            utils::convert_to_percent(
+                utils::get_total_disk_usage_across_all_disks(disks_info),
+                utils::get_total_disk_space_across_all_disks(disks_info)
+            ),
+            utils::convert_bytes_to_gbs(utils::get_total_disk_space_across_all_disks(disks_info)),
+            system_info.system_host_name,
+            system_info.system_kernal_version,
+            utils::format_uptime(system_info.uptime_in_seconds),
+            system_info.system_os_version,
+        )
     }
 }
