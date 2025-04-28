@@ -1,3 +1,6 @@
+use serde::{Serialize, Deserialize};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CpuReportInfo {
     pub brand: String,
     pub frequency: u64,

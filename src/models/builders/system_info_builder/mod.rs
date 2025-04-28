@@ -14,6 +14,8 @@ pub struct SystemInfoBuilder {
     total_memory: Option<u64>,
     cpu_arch: Option<String>,
     num_cpus: Option<u8>,
+    total_cpu_usage: Option<f32>,
+    uptime_in_seconds: Option<u64>,
 }
 
 impl SystemInfoBuilder {
@@ -32,6 +34,8 @@ impl SystemInfoBuilder {
             total_memory: None,
             cpu_arch: None,
             num_cpus: None,
+            total_cpu_usage: None,
+            uptime_in_seconds: None,
         }
     }
 
@@ -100,6 +104,16 @@ impl SystemInfoBuilder {
         self
     }
 
+    pub fn set_total_cpu_usage(mut self, total_cpu_usage: f32) -> Self {
+        self.total_cpu_usage = Some(total_cpu_usage);
+        self
+    }
+
+    pub fn set_uptime_in_seconds(mut self, uptime_in_seconds: u64) -> Self {
+        self.uptime_in_seconds = Some(uptime_in_seconds);
+        self
+    }
+
     pub fn build(&self) -> SystemReportInfo {
         SystemReportInfo {
             platform: self
@@ -146,6 +160,12 @@ impl SystemInfoBuilder {
             ),
             num_cpus: self.num_cpus.clone().expect(
                 "SystemInfoBuilder -> build() has thrown an error -> Number of CPUs not set",
+            ),
+            total_cpu_usage: self.total_cpu_usage.clone().expect(
+                "SystemInfoBuilder -> build() has thrown an error -> Total CPU Usage not set",
+            ),
+            uptime_in_seconds: self.uptime_in_seconds.clone().expect(
+                "SystemInfoBuilder -> build() has thrown an error -> Uptime in Seconds not set",
             ),
         }
     }

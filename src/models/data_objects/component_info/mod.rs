@@ -1,5 +1,7 @@
+use serde::{Serialize, Deserialize};
 use crate::models::temperature_severity_status::TemperatureSeverityStatus;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentReportInfo {
     pub label: String,
     pub status: TemperatureSeverityStatus,

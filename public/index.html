@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux System Monitor</title>
+    <link rel="preload" as="style" href="/styles.css">
+    <link rel="stylesheet" href="/styles.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "dompurify": "https://esm.sh/dompurify"
+            }
+        }
+    </script>
+</head>
+<body>
+    
+    <!-- Header -->
+    <header>
+        <div class="header-logo">
+            <div class="logo-icon">L</div>
+            <h1>Linux Monitor</h1>
+        </div>
+        <div class="last-updated">Last updated: <span data-dyn-content="last-updated-time" id="last-updated-time">Just now</span></div>
+    </header>
+
+    <div class="dashboard-container">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-tab="overview">
+                    <a data-link href="/">
+                        <span class="menu-icon"></span>
+                        <span>Overview</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="cpu">
+                    <a data-link href="/cpu">
+                        <span class="menu-icon"></span>
+                        <span>CPU</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="memory">
+                    <a data-link href="/memory">
+                        <span class="menu-icon"></span>
+                        <span>Memory</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="disk">
+                    <a data-link href="/disks">
+                        <span class="menu-icon"></span>
+                        <span>Disk</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="components">
+                    <a data-link href="/components">
+                        <span class="menu-icon"></span>
+                        <span>Components</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="dyn-app" class="main-content">
+            <!-- Hateoas Content -->
+        </main>
+    </div>
+
+    <script src="/bootstrap.js" type="module"></script>
+</body>
+</html>

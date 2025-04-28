@@ -1,3 +1,4 @@
+use serde::{Serialize, Deserialize};
 use sysinfo::{
     Components, CpuRefreshKind, Disks, MemoryRefreshKind, Networks, RefreshKind, System,
 };
@@ -17,14 +18,16 @@ use crate::{
     utils,
 };
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkReportInfo {}
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemReport {
-    components_report_info: Vec<ComponentReportInfo>,
-    cpu_report_info: Vec<CpuReportInfo>,
-    disks_report_info: Vec<DiskReportInfo>,
-    network_report_info: NetworkReportInfo,
-    system_info: SystemReportInfo,
+    pub components_report_info: Vec<ComponentReportInfo>,
+    pub cpu_report_info: Vec<CpuReportInfo>,
+    pub disks_report_info: Vec<DiskReportInfo>,
+    pub network_report_info: NetworkReportInfo,
+    pub system_info: SystemReportInfo,
 }
 
 impl SystemReport {
@@ -267,6 +270,8 @@ impl SystemReport {
 
         cards
     }
+
+
 }
 
 pub struct SystemReporter<'a> {
@@ -315,6 +320,8 @@ impl<'a> SystemReporter<'a> {
             System::long_os_version().unwrap_or_else(|| "Undetermined".to_string());
         let system_host_name = System::host_name().unwrap_or_else(|| "Undetermined".to_string());
 
+        let uptime = System::uptime();
+
         let mut system_info_builder = SystemInfoBuilder::new();
 
         let system_info = system_info_builder
@@ -331,6 +338,8 @@ impl<'a> SystemReporter<'a> {
             .set_system_os_version(&system_os_version)
             .set_cpu_arch(&cpu_arch)
             .set_num_cpus(num_cpus)
+            .set_total_cpu_usage(self.system.global_cpu_usage())
+            .set_uptime_in_seconds(uptime)
             .build();
 
         let mut cpu_info_reports: Vec<CpuReportInfo> = Vec::new();
