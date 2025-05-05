@@ -1,7 +1,7 @@
 use actix_cors::Cors;
 use actix_files;
 use actix_web::{
-    App, HttpResponse, HttpServer,
+    App, HttpServer,
     dev::{Service, ServiceRequest, ServiceResponse, fn_service},
     http, middleware, web,
 };
@@ -14,6 +14,7 @@ mod app;
 mod env;
 mod log;
 mod models;
+mod rdf;
 mod services;
 mod ui;
 mod utils;
@@ -24,10 +25,11 @@ async fn main() -> std::io::Result<()> {
 
     let components = Components::new_with_refreshed_list();
     let disks = Disks::new_with_refreshed_list();
-    let networks = Networks::new();
+    let mut networks = Networks::new_with_refreshed_list();
     let mut system = System::new_all();
 
     system.refresh_all();
+    networks.refresh(true);
 
     let app_state = app::AppState {
         components: Arc::new(Mutex::new(components)),
@@ -40,14 +42,8 @@ async fn main() -> std::io::Result<()> {
         let cors = Cors::default()
             .allow_any_origin()
             .allowed_methods(vec!["HEAD", "OPTIONS", "GET"])
-            .allowed_headers(vec![
-                http::header::ACCEPT,
-                http::header::ACCEPT_ENCODING,
-                http::header::CONTENT_ENCODING,
-                http::header::CONTENT_LENGTH,
-                http::header::CONTENT_TYPE,
-            ])
-            .max_age(3600);
+            .allowed_headers(vec![http::header::ACCEPT, http::header::ACCEPT_ENCODING])
+            .max_age(30);
 
         App::new()
             .app_data(web::Data::new(app_state.clone()))
@@ -66,10 +62,23 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/api")
                     .wrap(middleware::Compress::default())
                     .configure(|config| {
+                        // HTML Routes
                         config.service(services::http_views::routes::render_overview_as_html);
                         config.service(services::http_views::routes::render_cpu_as_html);
                         config.service(services::http_views::routes::render_memory_as_html);
                         config.service(services::http_views::routes::render_disks_as_html);
+                        config.service(services::http_views::routes::render_components_as_html);
+                        config.service(services::http_views::routes::render_networks_as_html);
+
+                        // JSON Routes
+                        config.service(services::json_views::routes::render_overview_as_json);
+                        config.service(services::json_views::routes::render_system_as_json);
+                        config.service(services::json_views::routes::render_cpus_as_json);
+                        config.service(services::json_views::routes::render_disks_as_json);
+                        config.service(services::json_views::routes::render_components_as_json);
+                        config.service(services::json_views::routes::render_networks_as_json);
+
+                        // RDF Routes
                     }),
             )
             .service(
@@ -85,11 +94,9 @@ async fn main() -> std::io::Result<()> {
                                 .redirect_to_slash_directory()
                                 .show_files_listing()
                                 .default_handler(fn_service(|req: ServiceRequest| async {
-                                    let mut error_logger = crate::log::logger()
-                                        .extend("static-files-error".to_string());
-                                    error_logger.write("File not found!".to_string());
                                     let (req, _) = req.into_parts();
-                                    let res = HttpResponse::InternalServerError().finish();
+                                    let file = actix_files::NamedFile::open("public/index.html")?;
+                                    let res = file.into_response(&req);
                                     Ok(ServiceResponse::new(req, res))
                                 })),
                         );

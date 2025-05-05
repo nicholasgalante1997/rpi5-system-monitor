@@ -26,6 +26,10 @@ export default {
         {
             path: "/components",
             view: "components"
+        },
+        {
+            path: "/networks",
+            view: "networks"
         }
     ]
 };

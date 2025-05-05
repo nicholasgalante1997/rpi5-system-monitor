@@ -113,11 +113,18 @@ class AppRouter {
     const tabs = document.querySelectorAll('[data-tab]');
     tabs.forEach((tab) => {
       const tabId = tab.dataset.tab
+
+      if (window.location.pathname === '/' && tabId === 'overview') {
+        tab.classList.add('active');
+        return;
+      }
+
       if (tabId === window.location.pathname.slice(1)) {
         tab.classList.add('active');
       } else {
         tab.classList.remove('active');
       }
+      
     });
   }
 

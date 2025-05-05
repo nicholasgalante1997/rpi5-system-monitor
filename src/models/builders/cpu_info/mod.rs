@@ -1,6 +1,5 @@
 use crate::models::data_objects::cpu_info::CpuReportInfo;
 
-
 pub struct CpuInfoBuilder {
     brand: Option<String>,
     frequency: Option<u64>,
@@ -47,12 +46,21 @@ impl CpuInfoBuilder {
 
     pub fn build(self) -> CpuReportInfo {
         CpuReportInfo {
-            brand: self.brand.expect("CpuInfoBuilder -> build() has thrown an error -> Brand not set"),
-            frequency: self.frequency.expect("CpuInfoBuilder -> build() has thrown an error -> Frequency not set"),
-            name: self.name.expect("CpuInfoBuilder -> build() has thrown an error -> Name not set"),
-            usage_percent: self.usage_percent.expect("CpuInfoBuilder -> build() has thrown an error -> Usage Percent not set"),
-            vendor_id: self.vendor_id.expect("CpuInfoBuilder -> build() has thrown an error -> Vendor ID not set"),
+            brand: self
+                .brand
+                .expect("CpuInfoBuilder -> build() has thrown an error -> Brand not set"),
+            frequency: self
+                .frequency
+                .expect("CpuInfoBuilder -> build() has thrown an error -> Frequency not set"),
+            name: self
+                .name
+                .expect("CpuInfoBuilder -> build() has thrown an error -> Name not set"),
+            usage_percent: self
+                .usage_percent
+                .expect("CpuInfoBuilder -> build() has thrown an error -> Usage Percent not set"),
+            vendor_id: self
+                .vendor_id
+                .expect("CpuInfoBuilder -> build() has thrown an error -> Vendor ID not set"),
         }
     }
-
 }

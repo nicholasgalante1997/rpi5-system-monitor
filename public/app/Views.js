@@ -1,5 +1,5 @@
-import dompurify from 'dompurify';
 import Config from './Config.js';
+import HypertextAppEngine from './HypertextAppEngine.js';
 
 class ViewEngine {
   #views = new Map();
@@ -10,6 +10,7 @@ class ViewEngine {
     this.#views.set('memory', this.#renderMemoryView.bind(this));
     this.#views.set('disks', this.#renderDisksView.bind(this));
     this.#views.set('components', this.#renderComponentsView.bind(this));
+    this.#views.set('networks', this.#renderNetworkView.bind(this));
     this.#views.set('404', this.#render404View.bind(this));
   }
 
@@ -83,6 +84,17 @@ class ViewEngine {
     }
   }
 
+  async #renderNetworkView() {
+    try {
+      const html = await this.#fetchView('networks');
+      const app = document.getElementById(Config.app.elementId);
+      app.innerHTML = html;
+    } catch (error) {
+      console.error('Error fetching network view:', error);
+      throw new Error('Error fetching network view');
+    }
+  }
+
   async #renderErrorView(error) {
     const app = document.getElementById(Config.app.elementId);
     app.innerHTML = `
@@ -100,11 +112,8 @@ class ViewEngine {
   }
 
   async #fetchView(view) {
-    const url = `/api/http-views/pages/${view}`;
-    const config = { method: 'GET', headers: { 'Accept': 'text/html', 'Accept-Encoding': 'gzip, deflate, br' } };
-    const response = await fetch(url, config);
-    const html = await response.text();
-    return dompurify.sanitize(html);
+    const path = `pages/${view}`;
+    return HypertextAppEngine.fetchHypertextFromServer(path);
   }
 }
 

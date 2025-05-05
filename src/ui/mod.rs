@@ -1,263 +1,9 @@
+use crate::models::data_objects::component_info::ComponentReportInfo;
 use crate::models::data_objects::{
-    cpu_info::CpuReportInfo, disk_info::DiskReportInfo, system_info::SystemReportInfo,
+    cpu_info::CpuReportInfo, disk_info::DiskReportInfo, network_info::NetworkReportInfo,
+    system_info::SystemReportInfo,
 };
 use crate::utils;
-
-pub struct Html {
-    content: String,
-}
-
-impl Html {
-    pub fn new(content: String) -> Self {
-        Self { content }
-    }
-
-    pub fn into_page(&self) -> String {
-        let page = format!(
-            r#"
-            <!doctype html>
-            <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Rs-pberry Pi System Monitor</title>
-                    {}
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="hero">
-                            <img src="https://cdn.iconscout.com/icon/free/png-256/free-raspberry-pi-3-569254.png" alt="Raspberry Pi Logo">
-                            <h1>System Monitor</h1>
-                            <p class="subtitle">Real-time hardware information dashboard</p>
-                        </div>
-                        {}
-                    </div>
-                </body>
-                <script async="async" type="module">
-                    setTimeout(() => window.reload(), 1000 * 60 * 60);
-                </script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
-            </html>
-            "#,
-            Html::get_page_styles(),
-            self.content
-        );
-
-        page
-    }
-
-    fn get_page_styles() -> String {
-        r#"
-        <style>
-            :root {
-                --primary-gradient: linear-gradient(135deg, #ff416c, #ff4b2b);
-                --secondary-gradient: linear-gradient(135deg, #654ea3, #eaafc8);
-                --glass-bg: rgba(255, 255, 255, 0.15);
-                --glass-border: rgba(255, 255, 255, 0.18);
-                --text-color: #f8f9fa;
-                --muted-text: rgba(248, 249, 250, 0.7);
-                --card-radius: 16px;
-                --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-            }
-
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            }
-
-            body {
-                background: linear-gradient(135deg, #121212, #2d3436);
-                color: var(--text-color);
-                min-height: 100vh;
-                line-height: 1.6;
-                padding: 20px;
-            }
-
-            .container {
-                max-width: 700px;
-                margin: 0 auto;
-            }
-
-            .hero {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                margin-bottom: 30px;
-                padding: 20px;
-                position: relative;
-            }
-
-            .hero img {
-                width: 120px;
-                height: auto;
-                margin-bottom: 15px;
-                filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
-            }
-
-            h1 {
-                font-size: 36px;
-                font-weight: 800;
-                margin-bottom: 10px;
-                background: var(--primary-gradient);
-                -webkit-background-clip: text;
-                background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-
-            .subtitle {
-                font-size: 16px;
-                color: var(--muted-text);
-                margin-bottom: 15px;
-            }
-
-            .refresh-time {
-                font-size: 12px;
-                color: var(--muted-text);
-                margin-top: 15px;
-            }
-
-            .cards-container {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .card {
-                background: var(--glass-bg);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                border-radius: var(--card-radius);
-                padding: 25px;
-                box-shadow: var(--shadow);
-                border: 1px solid var(--glass-border);
-                overflow: hidden;
-                position: relative;
-                transition: transform 0.3s ease;
-            }
-
-            .card:hover {
-                transform: translateY(-5px);
-            }
-
-            .card::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 4px;
-                background: var(--secondary-gradient);
-                border-radius: var(--card-radius) var(--card-radius) 0 0;
-            }
-
-            .card-title {
-                display: flex;
-                align-items: center;
-                margin-bottom: 15px;
-                font-weight: 600;
-            }
-
-            .card-title i {
-                margin-right: 10px;
-                font-size: 18px;
-                background: var(--primary-gradient);
-                -webkit-background-clip: text;
-                background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-
-            .info-row {
-                display: flex;
-                justify-content: space-between;
-                padding: 8px 0;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            }
-
-            .info-row:last-child {
-                border-bottom: none;
-            }
-
-            .info-label {
-                font-size: 14px;
-                color: var(--muted-text);
-            }
-
-            .info-value {
-                font-size: 14px;
-                font-weight: 500;
-            }
-
-            .progress-container {
-                margin-top: 10px;
-                margin-bottom: 5px;
-                height: 8px;
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 4px;
-                overflow: hidden;
-            }
-
-            .progress-bar {
-                height: 100%;
-                background: var(--primary-gradient);
-                width: 75%;
-                border-radius: 4px;
-            }
-
-            .temperature-indicator {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }
-
-            .temperature-value {
-                font-weight: 600;
-            }
-
-            .normal {
-                color: #4cd964;
-            }
-
-            .warning {
-                color: #ffcc00;
-            }
-
-            .danger {
-                color: #ff3b30;
-            }
-
-            .footer {
-                text-align: center;
-                margin-top: 40px;
-                color: var(--muted-text);
-                font-size: 12px;
-            }
-
-            @media (max-width: 540px) {
-                .card {
-                    padding: 20px;
-                }
-                h1 {
-                    font-size: 30px;
-                }
-            }
-
-            /* Custom animation for the refresh label */
-            @keyframes pulse {
-                0% { opacity: 0.6; }
-                50% { opacity: 1; }
-                100% { opacity: 0.6; }
-            }
-
-            .pulse {
-                animation: pulse 2s infinite ease-in-out;
-            }
-        </style>
-        "#.to_string()
-    }
-}
 
 pub struct HttpViews;
 
@@ -281,13 +27,13 @@ impl HttpViews {
                                 CPU Usage
                             </div>
                         </div>
-                        <div class="card-value" id="cpu-usage">{:.2}%</div>
+                        <div class="card-value" id="cpu-usage">{:.1}%</div>
                         <div class="progress-container">
                             <div class="progress-bar">
-                                <div class="progress-fill" id="cpu-progress" style="width: {:.2}%"></div>
+                                <div class="progress-fill" id="cpu-progress" style="width: {:.1}%"></div>
                             </div>
                             <div class="progress-stats">
-                                <span>0%</span>
+                                <span>{:.1}%</span>
                                 <span>100%</span>
                             </div>
                         </div>
@@ -301,14 +47,14 @@ impl HttpViews {
                                 Memory Usage
                             </div>
                         </div>
-                        <div class="card-value" id="memory-usage">{:.2} GB</div>
+                        <div class="card-value" id="memory-usage">{:.1} GB</div>
                         <div class="progress-container">
                             <div class="progress-bar">
-                                <div class="progress-fill" id="memory-progress" style="width: {}%"></div>
+                                <div class="progress-fill" id="memory-progress" style="width: {:.1}%"></div>
                             </div>
                             <div class="progress-stats">
-                                <span>0 GB</span>
-                                <span id="total-memory">{} GB</span>
+                                <span>{:.1} GB</span>
+                                <span id="total-memory">{:.1} GB</span>
                             </div>
                         </div>
                         <div class="card-description">Physical memory currently in use</div>
@@ -321,14 +67,14 @@ impl HttpViews {
                                 Disk Usage
                             </div>
                         </div>
-                        <div class="card-value" id="disk-usage">{:.2} GB</div>
+                        <div class="card-value" id="disk-usage">{:.1} GB</div>
                         <div class="progress-container">
                             <div class="progress-bar">
                                 <div class="progress-fill" id="disk-progress" style="width: {:.1}%"></div>
                             </div>
                             <div class="progress-stats">
-                                <span>0 GB</span>
-                                <span id="total-disk">{:.2} GB</span>
+                                <span>{:.1} GB</span>
+                                <span id="total-disk">{:.1} GB</span>
                             </div>
                         </div>
                         <div class="card-description">Primary storage utilization</div>
@@ -365,14 +111,17 @@ impl HttpViews {
             "#,
             system_info.total_cpu_usage,
             system_info.total_cpu_usage,
+            system_info.total_cpu_usage,
             utils::convert_bytes_to_gbs(system_info.used_memory),
             utils::convert_to_percent(system_info.used_memory, system_info.total_memory),
+            utils::convert_bytes_to_gbs(system_info.used_memory),
             utils::convert_bytes_to_gbs(system_info.total_memory),
             utils::convert_bytes_to_gbs(utils::get_total_disk_usage_across_all_disks(disks_info)),
             utils::convert_to_percent(
                 utils::get_total_disk_usage_across_all_disks(disks_info),
                 utils::get_total_disk_space_across_all_disks(disks_info)
             ),
+            utils::convert_bytes_to_gbs(utils::get_total_disk_usage_across_all_disks(disks_info)),
             utils::convert_bytes_to_gbs(utils::get_total_disk_space_across_all_disks(disks_info)),
             system_info.system_host_name,
             system_info.system_kernal_version,
@@ -398,10 +147,10 @@ impl HttpViews {
                                 CPU Usage
                             </div>
                         </div>
-                        <div class="card-value" id="cpu-usage-detail">{}%</div>
+                        <div class="card-value" id="cpu-usage-detail">{:.1}%</div>
                         <div class="progress-container">
                             <div class="progress-bar">
-                                <div class="progress-fill" id="cpu-progress-detail" style="width: {}%"></div>
+                                <div class="progress-fill" id="cpu-progress-detail" style="width: {:.1}%"></div>
                             </div>
                         </div>
                     </div>
@@ -463,10 +212,10 @@ impl HttpViews {
                                 Physical Memory
                             </div>
                         </div>
-                        <div class="card-value" id="memory-usage-detail">0 GB / {} GB</div>
+                        <div class="card-value" id="memory-usage-detail">{:.1} GB / {:.1} GB</div>
                         <div class="progress-container">
                             <div class="progress-bar">
-                                <div class="progress-fill" id="memory-progress-detail" style="width: {}%"></div>
+                                <div class="progress-fill" id="memory-progress-detail" style="width: {:.1}%"></div>
                             </div>
                         </div>
                     </div>
@@ -478,10 +227,10 @@ impl HttpViews {
                                 Swap
                             </div>
                         </div>
-                        <div class="card-value" id="swap-usage">0 GB / {} GB</div>
+                        <div class="card-value" id="swap-usage">{:.1} GB / {:.1} GB</div>
                         <div class="progress-container">
                             <div class="progress-bar">
-                                <div class="progress-fill" id="swap-progress" style="width: {}%"></div>
+                                <div class="progress-fill" id="swap-progress" style="width: {:.1}%"></div>
                             </div>
                         </div>
                     </div>
@@ -497,18 +246,20 @@ impl HttpViews {
                     <div>
                         <div class="detail-row">
                             <div class="detail-label">Used</div>
-                            <div class="detail-value" id="mem-used">{} GB</div>
+                            <div class="detail-value" id="mem-used">{:.1} GB</div>
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">Free</div>
-                            <div class="detail-value" id="mem-free">{} GB</div>
+                            <div class="detail-value" id="mem-free">{:.1} GB</div>
                         </div>
                     </div>
                 </div>
             </div>
             "#,
+            utils::convert_bytes_to_gbs(system_info.used_memory),
             utils::convert_bytes_to_gbs(system_info.total_memory),
             utils::convert_to_percent(system_info.used_memory, system_info.total_memory),
+            utils::convert_bytes_to_gbs(system_info.used_swap),
             utils::convert_bytes_to_gbs(system_info.total_swap),
             utils::convert_to_percent(system_info.used_swap, system_info.total_swap),
             utils::convert_bytes_to_gbs(system_info.used_memory),
@@ -555,23 +306,48 @@ impl HttpViews {
     }
 
     pub fn get_cpu_list_view(cpu_info: &Vec<CpuReportInfo>) -> String {
-        let mut cpu_list = String::new();
+        let mut cpu_table = String::new();
+
+        cpu_table.push_str(
+            r#"
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Core Num</th>
+                        <th>Usage</th>
+                        <th>Frequency</th>
+                        <th>Vendor ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+            "#,
+        );
+
         for cpu in cpu_info {
-            cpu_list.push_str(&HttpViews::get_single_cpu_view(cpu));
+            cpu_table.push_str(&HttpViews::get_single_cpu_view(cpu));
         }
-        cpu_list
+
+        cpu_table.push_str(
+            r#"
+                </tbody>
+            </table>
+            "#,
+        );
+
+        cpu_table
     }
 
     pub fn get_single_cpu_view(cpu_info: &CpuReportInfo) -> String {
         format!(
             r#"
-            <span class="cpu-info-chip">
-                <span class="cpu-info-label">Model</span>: {}<br>
-                <span class="cpu-info-label">Core Num</span>: {}<br>
-                <span class="cpu-info-label">Usage</span>: {}%<br>
-                <span class="cpu-info-label">Frequency</span>: {} MHz<br>
-                <span class="cpu-info-label">Vendor ID</span>: {}<br>
-            </span>
+            <tr>
+                <td>{}</td>
+                <td>{}</td>
+                <td>{:.1}%</td>
+                <td>{} MHz</td>
+                <td>{}</td>
+            </tr>
             "#,
             cpu_info.brand,
             cpu_info.name,
@@ -594,12 +370,12 @@ impl HttpViews {
             r#"
             <tr>
                 <td>{}</td>
-                <td>{} GB</td>
-                <td>{} GB</td>
-                <td>{} GB</td>
-                <td>{}%</td>
-                <td>{} MB</td>
-                <td>{} MB</td>
+                <td>{:.1} GB</td>
+                <td>{:.1} GB</td>
+                <td>{:.1} GB</td>
+                <td>{:.1}%</td>
+                <td>{:.1} MB</td>
+                <td>{:.1} MB</td>
             </tr>
             "#,
             disk_info.mount_point,
@@ -609,6 +385,129 @@ impl HttpViews {
             utils::convert_to_percent(disk_info.used_space, disk_info.total_space),
             utils::convert_bytes_to_mbs(disk_info.usage_total_write_bytes),
             utils::convert_bytes_to_mbs(disk_info.usage_total_read_bytes)
+        )
+    }
+
+    pub fn get_components_view(components: &Vec<ComponentReportInfo>) -> String {
+        format!(
+            r#"
+            <div id="components" class="tab-content active">
+                <div class="section-header">
+                    <h2 class="section-title">System Components</h2>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon"></div>
+                            Hardware Overview
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Component Name</th>
+                                <th>Status</th>
+                                <th>Temperature</th>
+                                <th>Critical Temperature
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            "#,
+            &HttpViews::get_components_table_view(components)
+        )
+    }
+
+    pub fn get_components_table_view(components: &Vec<ComponentReportInfo>) -> String {
+        let mut components_table = String::new();
+        for component in components {
+            components_table.push_str(&HttpViews::get_component_table_row(component));
+        }
+        components_table
+    }
+
+    pub fn get_component_table_row(component: &ComponentReportInfo) -> String {
+        format!(
+            r#"
+            <tr>
+                <td>{}</td>
+                <td>{:#?}</td>
+                <td>{:.1}°C</td>
+                <td>{:.1}°C</td>
+            </tr>
+            "#,
+            component.label,
+            component.status,
+            component.temperature,
+            component.critical_temperature.unwrap_or_else(|| -1.0_f32)
+        )
+    }
+
+    pub fn get_network_view(network_info: &Vec<NetworkReportInfo>) -> String {
+        format!(
+            r#"
+            <div id="network" class="tab-content active">
+                <div class="section-header">
+                    <h2 class="section-title">Network Usage</h2>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon"></div>
+                            Network Interfaces
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Packets Received</th>
+                                <th>Packets Sent</th>
+                                <th>Bytes Received</th>
+                                <th>Bytes Sent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            "#,
+            &HttpViews::get_network_table_view(network_info)
+        )
+    }
+
+    pub fn get_network_table_view(network_info: &Vec<NetworkReportInfo>) -> String {
+        let mut network_table = String::new();
+        for network in network_info {
+            network_table.push_str(&HttpViews::get_single_network_view(network));
+        }
+        network_table
+    }
+
+    pub fn get_single_network_view(network: &NetworkReportInfo) -> String {
+        format!(
+            r#"
+            <tr>
+                <td>{}</td>
+                <td>{:.1}</td>
+                <td>{:.1}</td>
+                <td>{:.1} MB</td>
+                <td>{:.1} MB</td>
+            </tr>
+            "#,
+            network.interface_name,
+            network.rx_packets,
+            network.tx_packets,
+            utils::convert_bytes_to_mbs(network.rx_bytes),
+            utils::convert_bytes_to_mbs(network.tx_bytes)
         )
     }
 }

@@ -15,6 +15,7 @@ class App {
 
   setupEventListeners() {
     this.setupLinkEventListeners();
+    this.setupPopStateEventListeners();
   }
 
   setupLinkEventListeners() {

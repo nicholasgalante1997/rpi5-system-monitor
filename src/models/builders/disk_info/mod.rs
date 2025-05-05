@@ -81,17 +81,42 @@ impl DiskReportInfoBuilder {
 
     pub fn build(&self) -> DiskReportInfo {
         DiskReportInfo {
-            name: self.name.clone().expect("DiskInfoBuilder -> build() has thrown an error -> Name not set"),
-            mount_point: self.mount_point.clone().expect("DiskInfoBuilder -> build() has thrown an error -> Mount Point not set"),
-            file_system: self.file_system.clone().expect("DiskInfoBuilder -> build() has thrown an error -> File System not set"),
-            kind: self.kind.clone().expect("DiskInfoBuilder -> build() has thrown an error -> Kind not set"),
-            total_space: self.total_space.clone().expect("DiskInfoBuilder -> build() has thrown an error -> Total Space not set"),
-            available_space: self.available_space.clone().expect("DiskInfoBuilder -> build() has thrown an error -> Available Space not set"),
-            used_space: self.used_space.clone().expect("DiskInfoBuilder -> build() has thrown an error -> Used Space not set"),
-            percentage_free: self.percentage_free.clone().expect("DiskInfoBuilder -> build() has thrown an error -> Percentage Free not set"),
-            usage_total_read_bytes: self.usage_total_read_bytes.clone().expect("DiskInfoBuilder -> build() has thrown an error -> Usage Total Read Bytes not set"),
-            usage_total_write_bytes: self.usage_total_write_bytes.clone().expect("DiskInfoBuilder -> build() has thrown an error -> Usage Total Write Bytes not set"),
+            name: self
+                .name
+                .clone()
+                .expect("DiskInfoBuilder -> build() has thrown an error -> Name not set"),
+            mount_point: self
+                .mount_point
+                .clone()
+                .expect("DiskInfoBuilder -> build() has thrown an error -> Mount Point not set"),
+            file_system: self
+                .file_system
+                .clone()
+                .expect("DiskInfoBuilder -> build() has thrown an error -> File System not set"),
+            kind: self
+                .kind
+                .clone()
+                .expect("DiskInfoBuilder -> build() has thrown an error -> Kind not set"),
+            total_space: self
+                .total_space
+                .clone()
+                .expect("DiskInfoBuilder -> build() has thrown an error -> Total Space not set"),
+            available_space: self.available_space.clone().expect(
+                "DiskInfoBuilder -> build() has thrown an error -> Available Space not set",
+            ),
+            used_space: self
+                .used_space
+                .clone()
+                .expect("DiskInfoBuilder -> build() has thrown an error -> Used Space not set"),
+            percentage_free: self.percentage_free.clone().expect(
+                "DiskInfoBuilder -> build() has thrown an error -> Percentage Free not set",
+            ),
+            usage_total_read_bytes: self.usage_total_read_bytes.clone().expect(
+                "DiskInfoBuilder -> build() has thrown an error -> Usage Total Read Bytes not set",
+            ),
+            usage_total_write_bytes: self.usage_total_write_bytes.clone().expect(
+                "DiskInfoBuilder -> build() has thrown an error -> Usage Total Write Bytes not set",
+            ),
         }
     }
-
 }
